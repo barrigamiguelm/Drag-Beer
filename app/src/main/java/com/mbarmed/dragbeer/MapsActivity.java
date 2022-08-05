@@ -9,6 +9,7 @@ import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
+import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
@@ -45,6 +46,11 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         mDatabase = FirebaseDatabase.getInstance("https://dragbeer-83331-default-rtdb.europe-west1.firebasedatabase.app/").getReference();
     }
 
+
+    final LatLng melbourneLocation = new LatLng(-37.813, 144.962);
+
+
+
     /**
      * Manipulates the map once available.
      * This callback is triggered when the map is ready to be used.
@@ -75,6 +81,8 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                     MarkerOptions markerOptions = new MarkerOptions();
                     markerOptions.position(new LatLng(latitud,longitud));
 
+
+
                     tmpRealTimeMarkers.add(mMap.addMarker(markerOptions));
 
 
@@ -84,6 +92,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 realTimeMarkers.addAll(tmpRealTimeMarkers);
 
             }
+
 
             @Override
             public void onCancelled(@NonNull DatabaseError error) {
