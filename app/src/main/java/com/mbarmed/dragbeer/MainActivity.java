@@ -4,6 +4,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 
 import android.Manifest;
+import android.annotation.SuppressLint;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.location.Location;
@@ -11,10 +12,13 @@ import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
+import android.widget.Toast;
 
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.tasks.OnSuccessListener;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 
@@ -27,7 +31,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private int MY_PERMISSIONS_REQUEST_READ_CONTACTS;
     private FusedLocationProviderClient fusedLocationClient;
     private DatabaseReference mDatabase;
-    private Button mBtnMaps;
+    private Button mBtnMaps,salir;
+    private FirebaseAuth mAuth;
 
 
     @Override
@@ -36,18 +41,37 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         setContentView(R.layout.activity_main);
 
         mBtnMaps = findViewById(R.id.boton);
+        salir = findViewById(R.id.btnSalir);
         mBtnMaps.setOnClickListener(this);
-
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
         mDatabase = FirebaseDatabase.getInstance("https://dragbeer-83331-default-rtdb.europe-west1.firebasedatabase.app/").getReference();
+        mAuth = FirebaseAuth.getInstance();
 
         subirLatLonFirebase();
 
+        salir.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                singOut();
+            }
+        });
+    }
 
+
+    //si esta dentro de la sesion o no
+    @Override
+    protected void onStart() {
+        super.onStart();
+        FirebaseUser user = mAuth.getCurrentUser();
+        if (user == null){
+            startActivity(new Intent(MainActivity.this, Login.class));
+        }
 
     }
 
 
+
+    //localizacion
     private void subirLatLonFirebase() {
         if (ActivityCompat.checkSelfPermission(this,
                 Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this,
@@ -98,4 +122,13 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         }
 
     }
+
+   private void singOut() {
+        FirebaseAuth.getInstance().signOut();
+       Toast.makeText(this, "Sesion cerrada correctamente", Toast.LENGTH_SHORT).show();
+        Intent intent = new Intent(this, Login.class);
+        startActivity(intent);
+    }
+
+
 }
