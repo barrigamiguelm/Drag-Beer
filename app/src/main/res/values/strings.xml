@@ -1,4 +1,10 @@
 <resources>
     <string name="app_name">DragBeer</string>
     <string name="title_activity_maps">MapsActivity</string>
+    <string-array name="sexo">
+        <item>Mujer</item>
+        <item>Hombre</item>
+        <item>Otro</item>
+        <item>Prefiero no decirlo</item>
+    </string-array>
 </resources>
