@@ -1,37 +1,60 @@
 package com.mbarmed.dragbeer;
 
+import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 
 import android.app.Activity;
 import android.app.DatePickerDialog;
+import android.content.ContentResolver;
+import android.content.Intent;
+import android.net.Uri;
 import android.os.Bundle;
+import android.os.UserHandle;
+import android.text.TextUtils;
 import android.view.View;
-import android.widget.AdapterView;
-import android.widget.ArrayAdapter;
+import android.webkit.MimeTypeMap;
+import android.widget.Button;
 import android.widget.DatePicker;
 import android.widget.EditText;
-import android.widget.Spinner;
+import android.widget.ImageButton;
+import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.auth.UserProfileChangeRequest;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.storage.FirebaseStorage;
+import com.google.firebase.storage.StorageReference;
+import com.google.firebase.storage.UploadTask;
+import com.squareup.picasso.Picasso;
 
-import java.text.SimpleDateFormat;
+import java.time.LocalDate;
+import java.time.Period;
 import java.util.Calendar;
-import java.util.Locale;
+import java.util.Date;
 
 public class CreacionUsuario extends AppCompatActivity {
 
-    private Spinner sexo;
+    private static final int PICK_IMAGE_REQUEST = 1;
     private TextView tvSaltar;
-    private EditText dateUser, username, emailCrear,biografia;
-    private Calendar calendario;
+    private ImageView imageView;
+    private EditText dateUser, username, emailCrear, biografia;
+    private Button btnRegistrar, uploadPhoto;
+
     private DatabaseReference mDatabase;
     private FirebaseAuth mAuth;
+    private FirebaseStorage storage;
+    private StorageReference mStorage;
+    private FirebaseUser firebaseUser;
+    private Uri uriImage;
+
     FirebaseUser user;
+    DatePickerDialog.OnDateSetListener setListener;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -40,76 +63,120 @@ public class CreacionUsuario extends AppCompatActivity {
 
         //inicializar
         tvSaltar = (TextView) findViewById(R.id.tvSaltar);
-        Spinner sexo = (Spinner) findViewById(R.id.sexoSpinner);
+        imageView = findViewById(R.id.imageView);
         dateUser = findViewById(R.id.dateUser);
         username = findViewById(R.id.username);
+        emailCrear = findViewById(R.id.emailCrear);
+        btnRegistrar = findViewById(R.id.btnRegistrar);
+        uploadPhoto = findViewById(R.id.uploadPhoto);
+        biografia = findViewById(R.id.biografia);
 
-
-        calendario = Calendar.getInstance();
+        //Firebase
         mDatabase = FirebaseDatabase.getInstance("https://dragbeer-83331-default-rtdb.europe-west1.firebasedatabase.app/").getReference();
         mAuth = FirebaseAuth.getInstance();
-        user = FirebaseAuth.getInstance().getCurrentUser();
+        firebaseUser = mAuth.getCurrentUser();
+        mStorage = FirebaseStorage.getInstance("gs://dragbeer-83331.appspot.com").getReference("Profile pics");
 
 
-        //seleccionar sexo
-        ArrayAdapter<CharSequence> adapter = ArrayAdapter.createFromResource(this,
-                R.array.sexo, android.R.layout.simple_spinner_item);
-        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-        sexo.setAdapter(adapter);
+        //autocomplete email with firebase authentication
+        if (firebaseUser != null) {
+            String correo = firebaseUser.getEmail();
+            emailCrear.setText(correo);
+        }
 
+        //Profile picture
+        Uri uri = firebaseUser.getPhotoUrl();
 
+        Picasso.with(CreacionUsuario.this).load(uri).into(imageView);
 
-
-        //calendario fecha nacimiento
-        DatePickerDialog.OnDateSetListener date = new DatePickerDialog.OnDateSetListener() {
-            @Override
-            public void onDateSet(DatePicker datePicker, int i, int i1, int i2) {
-
-                calendario.set(Calendar.YEAR, i);
-                calendario.set(Calendar.MONTH, i1);
-                calendario.set(Calendar.DAY_OF_MONTH, i2);
-                actualizarCalendario();
-            }
-
-            private void actualizarCalendario() {
-                String formato = "dd/MM/yy";
-                SimpleDateFormat sdf = new SimpleDateFormat(formato, Locale.ENGLISH);
-                dateUser.setText(sdf.format(calendario.getTime()));
-
-            }
-        };
-
-        dateUser.setOnClickListener(new View.OnClickListener() {
+        uploadPhoto.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                new DatePickerDialog(CreacionUsuario.this, date, calendario.get(Calendar.YEAR), calendario.get(Calendar.MONTH), calendario.get(Calendar.DAY_OF_MONTH)).show();
+                openFile();
             }
         });
+
+        btnRegistrar.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                uploadPhoto();
+               // mandarDatos();
+            }
+        });
+
+
     }
 
-    //seleccionar sexo
-    public void onItemSelected(AdapterView<?> parent, View view,
-                               int pos, long id) {
-        // An item was selected. You can retrieve the selected item using
-        parent.getItemAtPosition(pos);
+    private void openFile() {
+        Intent intent = new Intent();
+        intent.setType("image/*");
+        intent.setAction(Intent.ACTION_GET_CONTENT);
+        startActivityForResult(intent, PICK_IMAGE_REQUEST);
+
     }
 
-    public void onNothingSelected(AdapterView<?> parent) {
-        // Another interface callback
-        Toast.makeText(this, "Porfavor elige un sexo", Toast.LENGTH_SHORT).show();
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if (requestCode == PICK_IMAGE_REQUEST && resultCode == Activity.RESULT_OK && data != null && data.getData() != null) {
+            uriImage = data.getData();
+            imageView.setImageURI(uriImage);
+
+        }
     }
 
-    //mandar a firebase
-    String uid = user.getUid();
-    String usuario  = username.getText().toString();
-    String correo = user.getEmail();
-    String bio = biografia.getText().toString();
+    //mandar datos a firebase
+    private void mandarDatos() {
+
+        String usuario = username.getText().toString();
+        String bio = biografia.getText().toString();
+        String age = dateUser.getText().toString();
 
 
+        if (TextUtils.isEmpty(usuario)) {
+            username.requestFocus();
+            username.setError("Debe introducir una contraseña");
 
+        } else if (TextUtils.isEmpty(age)) {
+            dateUser.requestFocus();
+            dateUser.setError("Pon tu edad");
+        } else {
 
+        }
 
+    }
 
+    //subir foto a firebase
+    private void uploadPhoto() {
+
+        if (uriImage == null) {
+            StorageReference fileReference = mStorage.child(mAuth.getCurrentUser().getUid() + "." +
+                    getFileExtension(uriImage));
+
+            fileReference.putFile(uriImage).addOnSuccessListener(new OnSuccessListener<UploadTask.TaskSnapshot>() {
+                @Override
+                public void onSuccess(UploadTask.TaskSnapshot taskSnapshot) {
+                    fileReference.getDownloadUrl().addOnSuccessListener(new OnSuccessListener<Uri>() {
+                        @Override
+                        public void onSuccess(Uri uriImage) {
+                            Uri downloaUri = uriImage;
+                            firebaseUser = mAuth.getCurrentUser();
+                            UserProfileChangeRequest profileUpdates = new UserProfileChangeRequest.Builder()
+                                    .setPhotoUri(downloaUri).build();
+                            firebaseUser.updateProfile(profileUpdates);
+                            Toast.makeText(CreacionUsuario.this, "He llegado", Toast.LENGTH_SHORT).show();
+                        }
+                    });
+                }
+            });
+        }
+    }
+
+    private String getFileExtension(Uri uri) {
+        ContentResolver cr = this.getContentResolver();
+        MimeTypeMap mime = MimeTypeMap.getSingleton();
+        return mime.getExtensionFromMimeType(cr.getType(uri));
+    }
 
 
 }

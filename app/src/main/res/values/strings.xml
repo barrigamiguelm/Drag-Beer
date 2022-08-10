@@ -2,6 +2,7 @@
     <string name="app_name">DragBeer</string>
     <string name="title_activity_maps">MapsActivity</string>
     <string-array name="sexo">
+        <item>Selecciona un sexo</item>
         <item>Mujer</item>
         <item>Hombre</item>
         <item>Otro</item>
