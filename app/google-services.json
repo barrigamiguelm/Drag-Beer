@@ -1,0 +1,40 @@
+{
+  "project_info": {
+    "project_number": "671008534697",
+    "firebase_url": "https://dragbeer-83331-default-rtdb.europe-west1.firebasedatabase.app",
+    "project_id": "dragbeer-83331",
+    "storage_bucket": "dragbeer-83331.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:671008534697:android:236ea4ca0087cccab339b8",
+        "android_client_info": {
+          "package_name": "com.mbarmed.dragbeer"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "671008534697-1tm5cv06bha86eqr1b22ro2vu5mi9sio.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyD0yWQq6Yo5C_1Ma5T82nRbgmfI6LHX9ZU"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "671008534697-1tm5cv06bha86eqr1b22ro2vu5mi9sio.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
