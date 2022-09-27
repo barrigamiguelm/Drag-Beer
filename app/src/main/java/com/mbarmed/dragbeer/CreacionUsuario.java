@@ -47,7 +47,7 @@ public class CreacionUsuario extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_creacion_usuario);
 
-        //inicializar
+        //inicializarr
         TextView tvSaltar = (TextView) findViewById(R.id.tvSaltar);
         dateUser = findViewById(R.id.dateUser);
         fotoPerfil = findViewById(R.id.fotoPerfil);
